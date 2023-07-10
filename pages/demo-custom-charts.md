@@ -242,7 +242,7 @@ group by 1,2
 
 {/if}
 
-## Custom echarts - Tree map
+## Tree Map
 
 
 ```sql sales_by_country
@@ -264,21 +264,157 @@ sales(sale) AS (
     UNION ALL
     VALUES (130)
     UNION ALL
-    VALUES (95)
+    VALUES (50)
     UNION ALL
-    VALUES (80)
+    VALUES (23)
+),
+areas(area) AS (
+    VALUES ('North America')
+    UNION ALL
+    VALUES ('North America')
+    UNION ALL
+    VALUES ('Europe')
+    UNION ALL
+    VALUES ('Australia')
+    UNION ALL
+    VALUES ('Europe')
 )
 SELECT ROW_NUMBER() OVER (ORDER BY RANDOM()) AS id,
     name,
-    sale + CAST(RANDOM() * 10 AS INTEGER) AS sale
-FROM names CROSS JOIN sales
+    sale * CAST(RANDOM() * 2.5 AS INTEGER) AS sale,
+    area
+FROM names CROSS JOIN sales CROSS JOIN areas
 ORDER BY id
 ```
 
-```sql test_data
-select name, sale as sales
-from ${sales_by_country}
+```sql treemap_data
+SELECT name, CAST(sum(sale) / sum(sum(sale)) OVER () * 100 AS INTEGER) AS value
+FROM ${sales_by_country}
+GROUP BY name
 ```
+<script>
+const treemap_data2 = [
+      { name: 'Area 1', children: [
+        { name: 'Category 1', value: 100 },
+        { name: 'Category 2', value: 200 },
+        // Add more data objects with the 'name' category
+      ]},
+      // Add more data objects with the 'area' category
+      { name: 'Area 2', children: [
+        { name: 'Category 3', value: 40 },
+        { name: 'Category 4', value: 67 },
+        // Add more data objects with the 'name' category
+      ]},
+    ];
+
+
+
+const inputArray = [
+  { area: 'North America', name: 'USA', value: 100 },
+  { area: 'North America', name: 'Canada', value: 200 },
+  { area: 'Europe', name: 'UK', value: 40 },
+  { area: 'Europe', name: 'Spain', value: 67 },
+  // Add more objects to the input array
+];
+
+const outputArray = [];
+const areaMap = new Map();
+
+inputArray.forEach(obj => {
+  const { area, name, value } = obj;
+  
+  if (!areaMap.has(area)) {
+    areaMap.set(area, { name: area, children: [] });
+  }
+  
+  const areaObj = areaMap.get(area);
+  areaObj.children.push({ name, value });
+});
+
+areaMap.forEach(value => outputArray.push(value));
+
+console.log(JSON.stringify(outputArray, null, 2));
+</script>
+
+## Custom echarts - Simple Treemap
+data format is two columns. One is has to be names 'name' and another is 'value'
+
+<ECharts config={
+  {title: {
+        text: 'Sales by Country',
+        left: 'center'
+      },
+    tooltip: {
+      formatter: '{c}'
+    },
+    series: [
+      {name: 'All Countries',
+        type: 'treemap',
+        data: outputArray,
+        label: {
+          show: true,
+          formatter: '{b}: {c}%'
+        },
+        itemStyle: {
+            gapWidth: 1
+          },
+      }
+    ]
+  }
+}/>
+
+## Custom echarts - Simple Treemap 2
+
+```sql ticker_value
+select
+    cusip,
+    name_of_issuer as name,
+    ANY_VALUE(cusip_ticker) as ticker,
+    sum(value) as value,
+    ((sum(value) / (SELECT sum(value) FROM ${sec2})) * 100)::integer as pct,
+from ${sec2}
+where quarter = '2002Q2' and accession_number != 'SYNTHETIC-CLOSE'
+group by (1,2)
+order by value desc
+```
+
+<ECharts config={
+  {title: {
+        text: 'Assets by Value',
+        left: 'center'
+      },
+    tooltip: {
+      formatter: function (params) {      
+            const formattedValue = params.data.value.toLocaleString('en-US', {
+    maximumFractionDigits: 2
+  });
+  return `${params.name}<br />
+          \$${formattedValue}<br />
+          ${params.data.pct}%`;
+          }
+},
+    series: [
+      {name: 'All Assets',
+        type: 'treemap',
+        data: ticker_value,
+        label: {
+          position: 'insideTopLeft',
+          show: true,
+          formatter:  '{b}\n{c}',
+        },
+        itemStyle: {
+            gapWidth: 2,
+            borderColor: 'white',
+          },
+                upperLabel: {
+          show: false
+        },
+      }
+    ]
+  }
+}/>
+
+<hr>
 
 ## Custom Funnel Chart with in-line generated data
 
