@@ -334,6 +334,8 @@ inputArray.forEach(obj => {
 areaMap.forEach(value => outputArray.push(value));
 
 console.log(JSON.stringify(outputArray, null, 2));
+
+
 </script>
 
 ## Custom echarts - Simple Treemap
@@ -345,6 +347,7 @@ data format is two columns. One is has to be names 'name' and another is 'value'
         left: 'center'
       },
     tooltip: {
+      trigger: 'item',
       formatter: '{c}'
     },
     series: [
