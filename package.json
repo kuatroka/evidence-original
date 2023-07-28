@@ -15,6 +15,7 @@
   "dependencies": {
     "@evidence-dev/core-components": "1.1.0",
     "@evidence-dev/evidence": "19.0.0",
+    "d3": "^7.8.5",
     "mock-aws-s3": "^4.0.2",
     "nock": "^13.3.1"
   },

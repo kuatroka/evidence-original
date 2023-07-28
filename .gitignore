@@ -11,3 +11,5 @@ sources/*.paruqet
 *.duckdb
 chinook.db
 needful_things.duckdb
+.duckdb
+.db
